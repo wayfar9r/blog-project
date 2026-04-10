@@ -1,0 +1,96 @@
+syntax = "proto3";
+package proto.blog;
+
+// Blog service
+service BlogService {
+  // Register request
+  rpc Register(RegisterRequest) returns (AuthResponse);
+  // Login request
+  rpc Login(LoginRequest) returns (AuthResponse);
+  // Create post request
+  rpc CreatePost(PostCreateRequest) returns (PostResponse);
+  // Get post request
+  rpc GetPost(PostGetRequest) returns (PostResponse);
+  // Update post request
+  rpc UpdatePost(PostUpdateRequest) returns (PostResponse);
+  // Delete post request
+  rpc DeletePosts(PostDeleteRequest) returns (EmptyResponse);
+  // List posts
+  rpc ListPosts(PostListRequest) returns (PostListResponse);
+}
+
+// Register request message
+message RegisterRequest {
+  string username = 1;
+  string email = 2;
+  string password = 3;
+}
+
+// Login request
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+// Auth response
+message AuthResponse {
+  string token = 1;
+  User user = 2;
+}
+
+// User message
+message User {
+  uint32 id = 1;
+  string username = 2;
+  string email = 3;
+}
+
+// Post message
+message PostCreateRequest {
+  string title = 1;
+  string content = 2;
+}
+
+// Post update
+message PostUpdateRequest {
+  uint32 id = 1;
+  optional string title = 2;
+  optional string content = 3;
+}
+
+// Post delete request
+message PostDeleteRequest {
+  uint32 id = 1;
+}
+
+// Post get
+message PostGetRequest {
+  uint32 id = 1;
+}
+
+// Post request response
+message PostResponse {
+  uint32 id = 1;
+  uint32 author_id = 2;
+  string title = 3;
+  string content = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+// Empty response
+message EmptyResponse {}
+
+// Post list request
+message PostListRequest {
+  optional uint32 offset = 1;
+  optional uint32 limit = 2;
+}
+
+// Post list response
+message PostListResponse {
+  repeated PostResponse posts = 1;
+  uint32 total = 2;
+  uint32 limit = 3;
+  uint32 offset = 4;
+}

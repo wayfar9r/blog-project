@@ -1,0 +1,47 @@
+body {
+    counter-reset: postnumber;
+}
+
+#auth_block.unauthorized #login_form,
+#auth_block.unauthorized #register_form {
+    display: block;
+}
+
+#auth_block.authorized #login_form,
+#auth_block.authorized #register_form {
+    display: none;
+}
+
+.post_row.disabled button {
+    display: none;
+}
+
+.post_row form {
+    display: inline-flex;
+}
+
+.post_row input,
+.post_row textarea {
+    margin-right: 10px;
+}
+
+.post_row input,
+.post_row textarea {
+    height: 20px;
+}
+
+.row.post_row::before {
+    counter-increment: postnumber;
+    content: counter(postnumber);
+    display: inline;
+}
+
+#username_block {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#select_limit {
+    margin-bottom: 10px;
+    margin-left: 10px;
+}

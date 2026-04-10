@@ -1,0 +1,20 @@
+[package]
+name = "blog-client"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+reqwest = {version = "0", features = ["json"]}
+prost = {workspace = true}
+prost-types = {workspace = true}
+serde = {workspace = true}
+serde_json = {workspace = true}
+chrono = {workspace = true}
+anyhow = {workspace = true}
+thiserror = {workspace = true}
+tokio = {workspace = true}
+tonic = {workspace = true}
+tonic-prost = {workspace = true}
+
+[build-dependencies]
+tonic-prost-build = {workspace = true}

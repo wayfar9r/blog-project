@@ -1,0 +1,260 @@
+<!doctype html>
+<html>
+    <head>
+        <link href="style.css" rel="stylesheet" />
+    </head>
+    <body>
+        <h1>Blog App</h1>
+        <header>
+            <menu>
+                <div id="auth_block" class="unauthorized">
+                    <div id="authentificated_block">
+                        <div>
+                            <span id="username_block"></span>
+                        </div>
+                    </div>
+                    <form id="login_form">
+                        <input
+                            name="username"
+                            placeholder="username"
+                            type="text"
+                            required
+                        />
+                        <input
+                            name="password"
+                            placeholder="password"
+                            type="password"
+                            required
+                        />
+                        <input
+                            id="login_submit"
+                            type="submit"
+                            name="login_submit"
+                            value="login"
+                        />
+                    </form>
+                    <form id="register_form">
+                        <input
+                            name="username"
+                            placeholder="username"
+                            type="text"
+                            required
+                        />
+                        <input
+                            name="email"
+                            placeholder="email"
+                            type="email"
+                            required
+                        />
+                        <input
+                            name="password"
+                            placeholder="password"
+                            type="password"
+                            required
+                        />
+                        <input
+                            id="register_submit"
+                            type="submit"
+                            name="register_submit"
+                            value="register"
+                        />
+                    </form>
+                </div>
+            </menu>
+        </header>
+        <div id="posts_block">
+            <div id="add_post_block">
+                <h2>Add post</h2>
+                <div class="post_row">
+                    <form id="form_post_add" name="form_post_add">
+                        <input name="title" value="" placeholder="title" />
+                        <textarea
+                            name="content"
+                            placeholder="content"
+                        ></textarea>
+                        <button
+                            type="submit"
+                            class="btn-add-post"
+                            id="btn_add_post"
+                        >
+                            add
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <h2>Posts</h2>
+            <span>Limit</span></spa><select id="select_limit">
+                <option value="10">10</option>
+                <option value="30">30</option>
+                <option value="255">255</option>
+            </select>
+            <div id="posts_container"></div>
+        </div>
+        <script type="module">
+            import init, { BlogApp } from "./pkg/blog_wasm.js";
+
+            const auth_block = document.querySelector("#auth_block");
+
+            function show_authentificated_interface() {
+                auth_block.classList.remove("unauthorized");
+                auth_block.classList.add("authorized");
+            }
+
+            function hide_authentificated_interface() {
+                auth_block.classList.remove("authorized");
+                auth_block.classList.add("unauthorized");
+            }
+
+            init()
+                .then(() => {
+                    let blog_app = new BlogApp("http://localhost:3000");
+
+
+                    let load_posts = (offset = 0, limit = 10) => {
+
+                      blog_app
+                          .load_posts(offset, limit)
+                          .then((r) => {
+                              render_posts(r.posts);
+                              register_post_edit_events();
+                              register_post_delete_events();
+                          })
+                          .catch((reason) => {
+                              console.error(reason);
+                          });
+                    };
+
+                    if (blog_app.is_authentificated()) {
+                        show_authentificated_interface();
+                        const user_info = blog_app.get_user_info_from_storage();
+                        document.querySelector("#username_block").innerText = `Hello, ${user_info.username}!`;
+                    }
+
+                    document.querySelector("#select_limit").addEventListener("change", (e) => {
+                      e.preventDefault();
+                      load_posts(0, e.target.value);
+                    });
+
+                    document
+                        .querySelector("#form_post_add")
+                        .addEventListener("submit", (e) => {
+                            e.preventDefault();
+                            const title = e.target.elements.title.value;
+                            const content = e.target.elements.content.value;
+                            blog_app
+                                .create_post(title, content)
+                                .then((r) => {
+                                    window.location.reload();
+                                })
+                                .catch((reason) => {
+                                    alert(reason);
+                                });
+                        });
+
+                    const render_posts = (posts) => {
+                        let posts_html = "";
+
+                        document.querySelector("#posts_container").innerHTML = "";
+
+                        const user_info =( ()=> {
+                          if (blog_app.is_authentificated()) {
+                            return blog_app.get_user_info_from_storage();
+                          } else {
+                            return null;
+                          }
+                        })();
+
+                        for (const post of posts) {
+                            const contr_disabled = (user_info && user_info.id === post.author_id) ? "": "disabled";
+                            const row = `
+                              <div class="row post_row ${contr_disabled}"><form name="form_post_${post.id}" id=post_${post.id}>\
+                              <input name="post_id" value="${post.id}" type="hidden">
+                              <input name="title" value="${post.title}"/ ${contr_disabled}>
+                              <textarea name="content" ${contr_disabled}>${post.content}</textarea>
+                              <button class="btn-edit-post" id="btn_edit_post_${post.id}" ${contr_disabled}>edit</button>
+                              <button class="btn-delete-post" id="btn_delete_post_${post.id}" ${contr_disabled}>delete</button>
+                            </form></div>`;
+                            posts_html += row;
+                        }
+                        document.querySelector("#posts_container").innerHTML =
+                            posts_html;
+                    };
+
+                    const register_post_edit_events = () => {
+                        const elements =
+                            document.querySelectorAll(".btn-edit-post");
+                        elements.forEach((elem) => {
+                            elem.addEventListener("click", (e) => {
+                                e.preventDefault();
+                                const post_id = e.target.parentElement.querySelector("input[name='post_id']").value;
+                                const title = e.target.parentElement.querySelector("input[name='title']").value;
+                                const content = e.target.parentElement.querySelector("textarea[name='content']").value;
+
+                                blog_app.update_post(post_id, title, content).then(r => {
+                                  alert("post is updated");
+                                  window.location.reload();
+                                }).catch(reason => {
+                                  alert(`error to update post. ${reason}`);
+                                });
+                            });
+                        });
+                    };
+
+                    const register_post_delete_events = () => {
+                        const elements =
+                            document.querySelectorAll(".btn-delete-post");
+                        elements.forEach((elem) => {
+                            elem.addEventListener("click", (e) => {
+                                e.preventDefault();
+                                const post_elem = e.target.parentElement.querySelector('input[name="post_id"]');
+                                blog_app.delete_post(post_elem.value).then((r) => {
+                                  alert('post deleted');
+                                  window.location.reload();
+                                }).catch(reason => {
+                                  alert(`error to delete post. ${reason}`);
+                                })
+                            });
+                        });
+                    };
+
+                    load_posts();
+
+                    document
+                        .querySelector("#register_form")
+                        .addEventListener("submit", (e) => {
+                            e.preventDefault();
+                            console.log(e.target.elements);
+                            const username = e.target.elements.username.value;
+                            const email = e.target.elements.email.value;
+                            const password = e.target.elements.password.value;
+                            blog_app
+                                .register(username, email, password)
+                                .then((r) => {
+                                    console.log(r);
+                                })
+                                .catch((reason) => {
+                                    console.log(reason);
+                                });
+                        });
+                    document
+                        .querySelector("#login_form")
+                        .addEventListener("submit", (e) => {
+                            e.preventDefault();
+                            console.log(e.target.elements);
+                            const username = e.target.elements.username.value;
+                            const password = e.target.elements.password.value;
+                            blog_app
+                                .login(username, password)
+                                .then((r) => {
+                                    console.log(r);
+                                    window.location.reload();
+                                })
+                                .catch((reason) => {
+                                    console.error(reason);
+                                });
+                        });
+                })
+                .catch((reason) => console.error(reason));
+        </script>
+    </body>
+</html>

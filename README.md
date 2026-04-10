@@ -99,11 +99,18 @@ BlogClient::new(transport).await
 
 ## Использование
 
-1. Собираем пакет wasm.
+1.
+
+cd blog-server
+RUST_LOG="info,blog-project=debug" cargo  run
+
+2. Собираем пакет wasm.
 
 cd blog-cli
 wasm-pack build --target web
 
-2. Запускаем веб сервер
+3. Запускаем фасад сервер
 
 python3 -m http.server 8001
+
+4. Переходим на страницу в веб браузере localhost:8001
